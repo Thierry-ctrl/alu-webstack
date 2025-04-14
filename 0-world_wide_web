@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Function to get DNS record information
+get_record_info() {
+    local domain=$1
+    local subdomain=$2
+    local fqdn="${subdomain}.${domain}"
+    local record=$(dig +short ${fqdn})
+    
+    if [[ -z $record ]]; then
+        echo "No record found for ${fqdn}"
+        return
+    fi
+
+    local record_type=$(dig ${fqdn} | awk '/ANSWER SECTION:/ {getline; print $4}')
+    echo "The subdomain ${subdomain} is a ${record_type} record and points to ${record}"
+}
+
+# Main script logic
+domain=$1
+subdomain=$2
+
+if [[ -z $domain ]]; then
+    echo "Domain is a mandatory parameter."
+    exit 1
+fi
+
+if [[ -z $subdomain ]]; then
+    subdomains=("www" "lb-01" "web-01" "web-02")
+    for sub in "${subdomains[@]}"; do
+        get_record_info $domain $sub
+    done
+else
+    get_record_info $domain $subdomain
+fi
